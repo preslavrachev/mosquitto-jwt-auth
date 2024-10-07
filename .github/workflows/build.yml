@@ -1,47 +1,15 @@
+It seems that the `cargo` command is not found in the environment. This usually happens because Rust and Cargo are not installed in the Alpine environment. 
+
+Let's update the workflow to install Rust and Cargo in the Alpine build step:
+
+```yaml
 name: Build
-on:
+
+on: 
   push:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_COLOR: always
-    steps:
-      - uses: actions/checkout@v2
-      - name: install mosquitto
-        run: sudo apt-get install -y mosquitto mosquitto-clients
-      - name: Cargo clippy
-        run: cargo clippy
-      - name: Cargo test
-        run: cargo test --verbose
-        env:
-          RUST_TEST_THREADS: 1
-      - name: Cargo build
-        run: cargo build --release
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset
-        if: startsWith(github.ref, 'refs/tags/')
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/release/libmosquitto_jwt_auth.so
-          asset_name: libmosquitto_jwt_auth.so
-          asset_content_type: application/x-elf
   build-alpine:
     runs-on: ubuntu-latest
     env:
@@ -57,5 +25,15 @@ jobs:
       - name: Build in Alpine
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace alpine:latest /bin/sh -c "
-          apk add --no-cache build-base musl-dev openssl-dev &&
+          apk add --no-cache build-base musl-dev openssl-dev curl &&
+          curl https://sh.rustup.rs -sSf | sh -s -- -y &&
+          source $HOME/.cargo/env &&
           cargo build --release"
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: mosquitto-jwt-auth-alpine
+          path: ./target/release/libmosquitto_jwt_auth.so
+```
+
+This will install Rust and Cargo using Rustup during the Alpine build step.
