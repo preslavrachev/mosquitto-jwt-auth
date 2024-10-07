@@ -22,7 +22,7 @@ jobs:
       - name: Cargo build
         run: cargo build --release
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: mosquitto-jwt-auth-ubuntu
           path: ./target/release/libmosquitto_jwt_auth.so
@@ -47,7 +47,7 @@ jobs:
           source $HOME/.cargo/env &&
           cargo build --release"
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: mosquitto-jwt-auth-alpine
           path: ./target/release/libmosquitto_jwt_auth.so
