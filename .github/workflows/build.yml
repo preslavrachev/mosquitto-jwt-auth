@@ -40,3 +40,20 @@ jobs:
           asset_path: ./target/release/libmosquitto_jwt_auth.so
           asset_name: libmosquitto_jwt_auth.so
           asset_content_type: application/x-elf
+  build-alpine:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Alpine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu qemu-user-static
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          docker pull alpine:latest
+      - name: Build in Alpine
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace alpine:latest /bin/sh -c "
+          apk add --no-cache build-base musl-dev openssl-dev &&
+          cargo build --release"
